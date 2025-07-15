@@ -1,0 +1,30 @@
+.container {
+    width: 100%;
+    height: fit-content;
+    border: solid 3px black;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.item {
+    background-color: red;
+    height: 100px;
+    width: 100px;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#i1 {
+    background-color: red;
+}
+
+#i2 {
+    background-color: blue;
+}
+
+#i3 {
+    background-color: green;
+}
