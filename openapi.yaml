@@ -1,17 +1,19 @@
 openapi: 3.0.3
 info:
   title: notes-app-API
-  description: API for notes-app, a note-taking application with user authentication and note management.
+  description: API for notes-app, a note-taking application with user authentication, folders, and note management.
   version: 1.0.0
   contact:
     name: API Support
     email: support@notes-app.com
 servers:
-  - url: http://localhost:3000
+  - url: http://localhost:3000/api
     description: Local development server
 tags:
   - name: Authentication
     description: Endpoints for user registration and login
+  - name: Folders
+    description: Endpoints for managing folders
   - name: Notes
     description: Endpoints for creating, retrieving, and managing notes
 components:
@@ -19,7 +21,7 @@ components:
     CookieAuth:
       type: apiKey
       in: cookie
-      name: acces_token
+      name: access_token
   schemas:
     RegisterResponse:
       type: object
@@ -64,53 +66,204 @@ components:
           type: string
           format: password
           example: StrongPass123!
-    ErrorResponse:
-      type: object
-      properties:
-        message:
-          type: string
-          example: An error occurred
-          
-    LinkRequest:
-      type: object
-      required:
-        - originalUrl
-      properties:
-        originalUrl:
-          type: string
-          format: uri
-          example: https://example.com
-        expiresAt:
-          type: string
-          format: date-time
-          example: 2025-08-12T12:00:00Z
-    LinkResponse:
+
+    Folder:
       type: object
       properties:
         id:
           type: integer
-          example: 123
-        originalUrl:
+          example: 1
+        name:
           type: string
-          format: uri
-          example: https://example.com
-        shortUrl:
-          type: string
-          format: uri
-          example: http://linktun.com/abc123
-        favIcon:
-          type: string
-          format: uri
-          example: https://example.com/favicon.ico
-        createdAt:
+          example: Proyectos
+        parent_folder_id:
+          type: integer
+          nullable: true
+          example: null
+        user_id:
+          type: integer
+          example: 1
+        created_at:
           type: string
           format: date-time
-          example: 2025-08-12T11:00:00Z
-        expiresAt:
+          example: "2025-01-15T10:00:00Z"
+        updated_at:
           type: string
           format: date-time
-          example: 2025-08-12T12:00:00Z
+          example: "2025-01-15T10:00:00Z"
+
+    CreateFolderRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: Nueva carpeta
+        parent_folder_id:
+          type: integer
+          nullable: true
+          example: null
+
+    UpdateFolderRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          example: Nombre actualizado
+
+    FolderContent:
+      type: object
+      properties:
+        folders:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 3
+              name:
+                type: string
+                example: Subcarpeta
+              parent_folder_id:
+                type: integer
+                example: 1
+              created_at:
+                type: string
+                format: date-time
+                example: "2025-01-15T10:00:00Z"
+        notes:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 5
+              title:
+                type: string
+                example: Mi nota
+              folder_id:
+                type: integer
+                example: 1
+              created_at:
+                type: string
+                format: date-time
+                example: "2025-01-15T11:00:00Z"
+
+    Note:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Mi primera nota
+        content:
+          type: string
+          example: Contenido de la nota...
+        folder_id:
+          type: integer
+          nullable: true
+          example: null
+        user_id:
+          type: integer
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2025-01-15T10:00:00Z"
+
+    CreateNoteRequest:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          example: Nueva nota
+        content:
+          type: string
+          example: Contenido de la nota
+        folder_id:
+          type: integer
+          nullable: true
+          example: null
+
+    UpdateNoteRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Título actualizado
+        content:
+          type: string
+          example: Contenido actualizado
+        folder_id:
+          type: integer
+          nullable: true
+          example: 3
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: INVALID_INPUT
+            message:
+              type: string
+              example: An error occurred
+
 paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterResponse"
+        "400":
+          description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Conflict - Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /auth/login:
     post:
       tags:
@@ -147,12 +300,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
   /auth/verify:
     get:
       tags:
         - Authentication
       summary: Verify authentication using token in cookies
       description: Validates the JWT token stored in cookies and returns success if valid.
+      security:
+        - CookieAuth: []
       responses:
         "200":
           description: Token is valid
@@ -169,6 +325,461 @@ paths:
                     example: Token is valid
         "401":
           description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /folders:
+    get:
+      tags:
+        - Folders
+      summary: Get folders of the authenticated user
+      description: Returns folders. Use parent_id query param to filter by parent folder. Without parent_id returns root folders.
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: parent_id
+          in: query
+          description: Parent folder ID to filter subfolders
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of folders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Folder"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      tags:
+        - Folders
+      summary: Create a new folder
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateFolderRequest"
+      responses:
+        "201":
+          description: Folder created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Folder"
+        "400":
+          description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Parent folder not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /folders/{id}:
+    get:
+      tags:
+        - Folders
+      summary: Get a specific folder
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Folder ID
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Folder details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Folder"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Folder not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      tags:
+        - Folders
+      summary: Update a folder
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Folder ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateFolderRequest"
+      responses:
+        "200":
+          description: Folder updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Folder"
+        "400":
+          description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Folder not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags:
+        - Folders
+      summary: Delete a folder (cascade)
+      description: Deletes the folder and all its content (subfolders and notes)
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Folder ID
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Folder deleted successfully
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Folder not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /folders/{id}/content:
+    get:
+      tags:
+        - Folders
+      summary: Get folder content (subfolders and notes)
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Folder ID
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Folder content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FolderContent"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Folder not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /notes:
+    get:
+      tags:
+        - Notes
+      summary: Get notes of the authenticated user
+      description: Returns notes. Use folder_id query param to filter by folder. Without folder_id or with "root" returns notes without folder.
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: folder_id
+          in: query
+          description: Folder ID to filter notes. Use "root" or omit for notes without folder.
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Note"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      tags:
+        - Notes
+      summary: Create a new note
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateNoteRequest"
+      responses:
+        "201":
+          description: Note created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "400":
+          description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Folder not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /notes/{id}:
+    get:
+      tags:
+        - Notes
+      summary: Get a specific note
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Note ID
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Note details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Note not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    put:
+      tags:
+        - Notes
+      summary: Update a note
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Note ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNoteRequest"
+      responses:
+        "200":
+          description: Note updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Note"
+        "400":
+          description: Bad request - Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Note not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags:
+        - Notes
+      summary: Delete a note
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Note ID
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Note deleted successfully
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Note not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
           content:
             application/json:
               schema:
