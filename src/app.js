@@ -10,14 +10,7 @@ swaggerDocument = YAML.load("./openapi.yaml");
 
 const app = express();
 
-app.use(cookieParser());
 app.use(express.json());
-app.use(
-  cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials: true,
-  })
-);
 
 app.use(
   OpenApiValidator.middleware({
