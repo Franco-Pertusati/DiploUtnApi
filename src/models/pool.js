@@ -1,5 +1,5 @@
-const mysql = require("mysql");
-const util = require("util");
+require('dotenv').config();
+const mysql = require("mysql2/promise");
 
 const pool = mysql.createPool({
   connectionLimit: 10,
@@ -8,7 +8,5 @@ const pool = mysql.createPool({
   password: process.env.MYSQL_PASSWORD,
   database: process.env.MYSQL_DB_NAME,
 });
-
-pool.query = util.promisify(pool.query);
 
 module.exports = pool;

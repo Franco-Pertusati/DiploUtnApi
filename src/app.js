@@ -12,17 +12,6 @@ const app = express();
 
 app.use(express.json());
 
-app.use(
-  OpenApiValidator.middleware({
-    apiSpec: swaggerDocument,
-    validateRequests: true,
-    validateResponses: true,
-    ignorePaths: /.*\/docs.*/,
-  })
-);
-
-app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerDocument));
-
 app.use("/", routes);
 
 app.use((err, req, res, next) => {
