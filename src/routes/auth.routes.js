@@ -33,10 +33,57 @@ router.post("/register", async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Usuario creado exitosamente",
-      user: newUser,
+      user: {
+        username: newUser.username,
+        email: newUser.email
+      },
     });
   } catch (error) {
     console.error("Error en register:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error en el servidor",
+    });
+  }
+});
+
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!password || !email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email y password son requeridos",
+      });
+    }
+
+    const user = await userModels.getUserByEmail(email);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Credenciales inválidas",
+      });
+    }
+
+    const passwordMatch = await bcrypt.comparePassword(password, user.password);
+    if (!passwordMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Credenciales inválidas",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Login exitoso",
+      user: {
+        username: user.username,
+        email: user.email
+      },
+    });
+  } catch (error) {
+    console.error("Error en login:", error);
     res.status(500).json({
       success: false,
       message: "Error en el servidor",
