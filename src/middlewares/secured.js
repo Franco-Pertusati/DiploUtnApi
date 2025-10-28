@@ -1,3 +1,5 @@
+const session = require("express-session");
+
 const secured = async (req, res, next) => {
   try {
     if (req.session.id_user) {

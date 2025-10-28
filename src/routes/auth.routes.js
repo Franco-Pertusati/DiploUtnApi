@@ -6,11 +6,10 @@ const bcrypt = require("../middlewares/bcrypt");
 router.post("/register", async (req, res) => {
   try {
     const { email, username, password } = req.body;
-
     if (!username || !password || !email) {
       return res.status(400).json({
-        succes: false,
-        message: "Username, password y email son requridos",
+        success: false,
+        message: "Username, password y email son requeridos",
       });
     }
 
@@ -23,19 +22,21 @@ router.post("/register", async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hashPassword(password);
-
-    const newUser = userModels.createUser({
+    const userId = await userModels.createUser({
       email,
       username,
       password: hashedPassword,
     });
 
+    req.session.id_user = userId;
+
     res.status(201).json({
       success: true,
       message: "Usuario creado exitosamente",
       user: {
-        username: newUser.username,
-        email: newUser.email
+        id: userId,
+        username: username,
+        email: email
       },
     });
   } catch (error) {
@@ -50,7 +51,6 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!password || !email) {
       return res.status(400).json({
         success: false,
@@ -74,10 +74,13 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    req.session.id_user = user.id;
+
     res.status(200).json({
       success: true,
       message: "Login exitoso",
       user: {
+        id: user.id,
         username: user.username,
         email: user.email
       },
@@ -87,6 +90,37 @@ router.post("/login", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Error en el servidor",
+    });
+  }
+});
+
+// Ruta para cerrar sesión
+router.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: "Error al cerrar sesión",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Sesión cerrada exitosamente",
+    });
+  });
+});
+
+router.get("/verify", (req, res) => {
+  if (req.session.id_user) {
+    res.status(200).json({
+      success: true,
+      message: "Sesión activa",
+      userId: req.session.id_user
+    });
+  } else {
+    res.status(401).json({
+      success: false,
+      message: "No hay sesión activa",
     });
   }
 });
