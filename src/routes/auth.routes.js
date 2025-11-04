@@ -94,7 +94,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Ruta para cerrar sesión
 router.post("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) {

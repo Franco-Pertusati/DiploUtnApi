@@ -32,6 +32,46 @@ async function getAllChangelogs() {
   }
 }
 
+async function updateChangelog(id, { version, release_date, description, tags, is_published } = {}) {
+  try {
+    const fields = [];
+    const values = [];
+
+    if (version !== undefined) {
+      fields.push("version = ?");
+      values.push(version);
+    }
+    if (release_date !== undefined) {
+      fields.push("release_date = ?");
+      values.push(release_date);
+    }
+    if (description !== undefined) {
+      fields.push("description = ?");
+      values.push(description);
+    }
+    if (tags !== undefined) {
+      fields.push("tags = ?");
+      values.push(JSON.stringify(tags));
+    }
+    if (is_published !== undefined) {
+      fields.push("is_published = ?");
+      values.push(is_published);
+    }
+
+    if (fields.length === 0) {
+      throw new Error("No fields provided to update");
+    }
+
+    values.push(id); // for WHERE id = ?
+    const sql = `UPDATE changelogs SET ${fields.join(", ")} WHERE id = ?`;
+    const [result] = await pool.query(sql, values);
+    return result.affectedRows > 0;
+  } catch (error) {
+    console.error("Error en updateChangelog:", error);
+    throw error;
+  }
+}
+
 async function deleteChangelog(id) {
   try {
     const [result] = await pool.query(
@@ -48,5 +88,6 @@ async function deleteChangelog(id) {
 module.exports = {
   createChangelog,
   getAllChangelogs,
-  deleteChangelog
+  deleteChangelog,
+  updateChangelog
 };
