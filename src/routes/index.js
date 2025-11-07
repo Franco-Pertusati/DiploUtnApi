@@ -7,6 +7,7 @@ const changelogRoutes = require("./changelogs.routes")
 
 
 router.use("/auth", authRoutes)
+
 router.use("/changelog", secured,  changelogRoutes)
 
 router.use("/status", (req, res) => {
