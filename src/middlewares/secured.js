@@ -1,6 +1,4 @@
-const session = require("express-session");
-
-const secured = async (req, res, next) => {
+const secured = (req, res, next) => {
   try {
     if (req.session.id_user) {
       next();

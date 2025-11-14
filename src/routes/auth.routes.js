@@ -109,17 +109,37 @@ router.post("/logout", (req, res) => {
   });
 });
 
-router.get("/verify", (req, res) => {
-  if (req.session.id_user) {
+router.get("/verify", async (req, res) => {
+  try {
+    if (!req.session.id_user) {
+      return res.status(401).json({
+        success: false,
+        message: "No hay sesión activa",
+      });
+    }
+
+    const user = await userModels.getUserById(req.session.id_user);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontrado",
+      });
+    }
+
     res.status(200).json({
       success: true,
-      message: "Sesión activa",
-      userId: req.session.id_user
+      message: "Sesión verificada",
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email
+      },
     });
-  } else {
-    res.status(401).json({
+  } catch (error) {
+    console.error("Error en verify:", error);
+    res.status(500).json({
       success: false,
-      message: "No hay sesión activa",
+      message: "Error en el servidor",
     });
   }
 });

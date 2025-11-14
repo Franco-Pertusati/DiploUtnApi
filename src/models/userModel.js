@@ -26,4 +26,17 @@ async function getUserByEmail(email) {
   }
 }
 
-module.exports = {getUserByEmail, createUser};
+async function getUserById(id) {
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, username, email FROM user WHERE id = ?",
+      [id]
+    );
+    return rows[0];
+  } catch (error) {
+    console.error("Error en getUserById:", error);
+    throw error;
+  }
+}
+
+module.exports = {getUserByEmail, createUser, getUserById};
