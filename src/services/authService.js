@@ -1,6 +1,6 @@
 const { generateToken } = require(".././config/jwt");
 const { hashPassword, comparePassword } = require(".././middlewares/bcrypt");
-const { createUser, getUserById, getUserByEmail } = require("../models/userModel");
+const { createUser, getUserByEmail } = require("../models/usersModel");
 
 async function registerUser({ username, email, password }) {
   if (typeof email !== "string" || !email.trim()) {

@@ -3,7 +3,7 @@ const pool = require("./pool");
 async function createUser({ username, password, email }) {
   try {
     const [result] = await pool.query(
-      "INSERT INTO user (username, password, email) VALUES (?, ?, ?)",
+      "INSERT INTO users (username, password, email) VALUES (?, ?, ?)",
       [username, password, email]
     );
     return result.insertId;
@@ -16,7 +16,7 @@ async function createUser({ username, password, email }) {
 async function getUserByEmail(email) {
   try {
     const [rows] = await pool.query(
-      "SELECT id, username, password, email FROM user WHERE email = ?",
+      "SELECT id, username, password, email FROM users WHERE email = ?",
       [email]
     );
     return rows[0];
@@ -29,7 +29,7 @@ async function getUserByEmail(email) {
 async function getUserById(id) {
   try {
     const [rows] = await pool.query(
-      "SELECT id, username, email FROM user WHERE id = ?",
+      "SELECT id, username, email FROM users WHERE id = ?",
       [id]
     );
     return rows[0];

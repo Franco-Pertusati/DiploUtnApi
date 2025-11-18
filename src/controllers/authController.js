@@ -36,7 +36,6 @@ async function login(req, res) {
 
 async function verify(req, res) {
   const token = req.cookies?.access_token;
-  console.log("verify: " + token)
 
   if (!token) {
     return res.status(401).json({ valid: false, message: "No token provided" });
