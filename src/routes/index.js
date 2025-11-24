@@ -7,8 +7,8 @@ const foldersRoutes = require("./folders.routes")
 
 router.use("/auth", authRoutes);
 router.use("/changelog", changelogRoutes);
-router.use("/folders", notesRoutes);
-router.use("/notes", foldersRoutes);
+router.use("/folders", foldersRoutes);
+router.use("/notes", notesRoutes);
 
 router.use("/status", (req, res) => {
   res.status(200).json({

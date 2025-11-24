@@ -1,7 +1,9 @@
-// routes/folders.routes.js
 const express = require("express");
 const router = express.Router();
 const foldersController = require("../controllers/folderController");
+const authMiddleware = require("../middlewares/auth");
+
+router.use(authMiddleware);
 
 router.get("/", foldersController.getFolders);
 router.get("/:id", foldersController.getFolder);
