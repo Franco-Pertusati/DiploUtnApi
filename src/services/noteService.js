@@ -2,7 +2,6 @@ const Note = require("../models/notesModels");
 const Folder = require("../models/foldersModel");
 
 class NoteService {
-  // Validar que una nota existe y pertenece al usuario
   async validateNoteOwnership(note_id, user_id) {
     const note = await Note.getNoteById(note_id, user_id);
     if (!note) {
@@ -14,7 +13,6 @@ class NoteService {
     return note;
   }
 
-  // Validar que la carpeta existe (si se proporciona)
   async validateFolder(folder_id, user_id) {
     if (!folder_id) {
       return null;
@@ -30,7 +28,6 @@ class NoteService {
     return folder;
   }
 
-  // Crear nota con validaciones
   async createNote(title, content, folder_id, user_id) {
     if (!title || title.trim() === "") {
       const error = new Error("El título de la nota es requerido");
@@ -45,27 +42,32 @@ class NoteService {
       title: title.trim(),
       content: content || "",
       folder_id: folder_id || null,
-      user_id
+      user_id,
     });
 
     return await Note.getNoteById(noteId, user_id);
   }
 
-  // Obtener notas del usuario
-  async getNotes(user_id, folder_id = null) {
+  async getAllNotes(user_id) {
+    return await Note.getAllNotesByUserId(user_id);
+  }
+
+  async getNotes(user_id, folder_id) {
     return await Note.getNotesByUserId(user_id, folder_id);
   }
 
-  // Obtener una nota específica
   async getNote(note_id, user_id) {
     return await this.validateNoteOwnership(note_id, user_id);
   }
 
-  // Actualizar nota
   async updateNote(note_id, user_id, updates) {
     const { title, content, folder_id } = updates;
 
-    if (title === undefined && content === undefined && folder_id === undefined) {
+    if (
+      title === undefined &&
+      content === undefined &&
+      folder_id === undefined
+    ) {
       const error = new Error("No hay campos para actualizar");
       error.code = "INVALID_INPUT";
       error.statusCode = 400;
@@ -79,7 +81,6 @@ class NoteService {
       throw error;
     }
 
-    // Validar que la nota existe y pertenece al usuario
     await this.validateNoteOwnership(note_id, user_id);
 
     if (folder_id !== undefined) {
@@ -96,12 +97,11 @@ class NoteService {
     return await Note.getNoteById(note_id, user_id);
   }
 
-  // Eliminar nota
   async deleteNote(note_id, user_id) {
     await this.validateNoteOwnership(note_id, user_id);
 
     const affectedRows = await Note.deleteNote(note_id, user_id);
-    
+
     if (affectedRows === 0) {
       const error = new Error("No se pudo eliminar la nota");
       error.code = "DELETE_FAILED";

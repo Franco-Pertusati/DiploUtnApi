@@ -82,6 +82,27 @@ async function updateNote(id, user_id, { title, content, folder_id }) {
   }
 }
 
+async function getAllNotesByUserId(user_id) {
+  try {
+    const query = `
+      SELECT 
+        id, title, content, folder_id, user_id, created_at, updated_at
+      FROM 
+        notes
+      WHERE 
+        user_id = ?
+      ORDER BY 
+        updated_at DESC
+    `;
+
+    const [rows] = await pool.query(query, [user_id]);
+    return rows;
+  } catch (error) {
+    console.error("Error en getAllNotesByUserId:", error);
+    throw error;
+  }
+}
+
 async function deleteNote(id, user_id) {
   try {
     const [result] = await pool.query(
@@ -100,5 +121,6 @@ module.exports = {
   getNoteById,
   getNotesByUserId,
   updateNote,
-  deleteNote
+  deleteNote,
+  getAllNotesByUserId,
 };

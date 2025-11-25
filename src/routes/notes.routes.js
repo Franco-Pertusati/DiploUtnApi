@@ -5,6 +5,7 @@ const authMiddleware = require("../middlewares/auth");
 
 router.use(authMiddleware);
 
+router.get("/all", noteController.getAllNotes);
 router.get("/", noteController.getNotes);
 router.get("/:id", noteController.getNote);
 router.post("/", noteController.createNote);
