@@ -4,11 +4,13 @@ const authRoutes = require("./auth.routes");
 const changelogRoutes = require("./changelogs.routes");
 const notesRoutes = require("./notes.routes");
 const foldersRoutes = require("./folders.routes")
+const flashcardsRoutes = require("./flashcards.routes")
 
 router.use("/auth", authRoutes);
 router.use("/changelog", changelogRoutes);
 router.use("/folders", foldersRoutes);
 router.use("/notes", notesRoutes);
+router.use("/flashcards", flashcardsRoutes);
 
 router.use("/status", (req, res) => {
   res.status(200).json({
