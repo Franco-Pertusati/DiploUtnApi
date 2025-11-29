@@ -43,8 +43,6 @@ class FlashcardsController {
         message: error.message || "Error al obtener flashcards",
       });
     }
-
-    console.log(res)
   }
 
   async getFlashcardById(req, res) {
