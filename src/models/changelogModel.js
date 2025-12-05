@@ -21,7 +21,6 @@ async function getAllChangelogs() {
       []
     );
     
-    // Parsear tags de JSON string a array
     return rows.map(row => ({
       ...row,
       tags: row.tags ? JSON.parse(row.tags) : []
